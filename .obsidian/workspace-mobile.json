@@ -1,0 +1,156 @@
+{
+  "main": {
+    "id": "117f33a26adfa5e9",
+    "type": "split",
+    "children": [
+      {
+        "id": "d8d4dc9a5aa8fcbc",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "b8d91240b49b42b7",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "강좌 1. Django 소개와 설치.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
+            "id": "793ce47dc64b711e",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "강좌 2. Django 설치와 기본 구조.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
+            "id": "68c8bd35cd390607",
+            "type": "leaf",
+            "state": {
+              "type": "empty",
+              "state": {}
+            }
+          }
+        ],
+        "currentTab": 2
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "7efc3680fdd58149",
+    "type": "mobile-drawer",
+    "children": [
+      {
+        "id": "580eb9cbe57257c6",
+        "type": "leaf",
+        "state": {
+          "type": "file-explorer",
+          "state": {
+            "sortOrder": "alphabetical"
+          }
+        }
+      },
+      {
+        "id": "1a48df8f109b723a",
+        "type": "leaf",
+        "state": {
+          "type": "search",
+          "state": {
+            "query": "",
+            "matchingCase": false,
+            "explainSearch": false,
+            "collapseAll": false,
+            "extraContext": false,
+            "sortOrder": "alphabetical"
+          }
+        }
+      },
+      {
+        "id": "79282bd42c92d134",
+        "type": "leaf",
+        "state": {
+          "type": "tag",
+          "state": {
+            "sortOrder": "frequency",
+            "useHierarchy": true
+          }
+        }
+      },
+      {
+        "id": "ff1b6dd8e0034170",
+        "type": "leaf",
+        "state": {
+          "type": "starred",
+          "state": {}
+        }
+      }
+    ],
+    "currentTab": 0
+  },
+  "right": {
+    "id": "78b1fc3e8bdaac1f",
+    "type": "mobile-drawer",
+    "children": [
+      {
+        "id": "cda64a422c9203e6",
+        "type": "leaf",
+        "state": {
+          "type": "backlink",
+          "state": {
+            "collapseAll": false,
+            "extraContext": false,
+            "sortOrder": "alphabetical",
+            "showSearch": false,
+            "searchQuery": "",
+            "backlinkCollapsed": false,
+            "unlinkedCollapsed": true
+          }
+        }
+      },
+      {
+        "id": "a1116ccddb8d4b4e",
+        "type": "leaf",
+        "state": {
+          "type": "outgoing-link",
+          "state": {
+            "linksCollapsed": false,
+            "unlinkedCollapsed": true
+          }
+        }
+      },
+      {
+        "id": "a0c40851c05e26d5",
+        "type": "leaf",
+        "state": {
+          "type": "outline",
+          "state": {}
+        }
+      },
+      {
+        "id": "1750cb16d809ae89",
+        "type": "leaf",
+        "state": {
+          "type": "git-view",
+          "state": {}
+        }
+      }
+    ],
+    "currentTab": 3
+  },
+  "active": "68c8bd35cd390607",
+  "lastOpenFiles": [
+    "2022-12-01.md",
+    "강좌 3. 설정 파일 구조화와 맞춤 설정.md",
+    "강좌 2. Django 설치와 기본 구조.md",
+    "강좌 1. Django 소개와 설치.md"
+  ]
+}
