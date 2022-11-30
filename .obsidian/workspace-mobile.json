@@ -35,7 +35,7 @@
             "id": "68c8bd35cd390607",
             "type": "leaf",
             "state": {
-              "type": "empty",
+              "type": "graph",
               "state": {}
             }
           }
@@ -146,7 +146,7 @@
     ],
     "currentTab": 3
   },
-  "active": "1750cb16d809ae89",
+  "active": "68c8bd35cd390607",
   "lastOpenFiles": [
     "2022-12-01.md",
     "강좌 3. 설정 파일 구조화와 맞춤 설정.md",
