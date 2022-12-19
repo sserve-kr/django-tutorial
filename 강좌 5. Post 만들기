@@ -1,0 +1,294 @@
+저번 4강에 걸쳐 Django의 기본적인 구조와 설정에 대해 알아보고, 직접 구성해보는 시간을 가졌습니다.  
+이제부터는 실전에 들어가겠습니다.  
+
+들어가기에 앞서, 용어 정리를 잠깐 하고 넘어가겠습니다.  
+이 강좌에서 부르는 "**루트 디렉토리/폴더**"는 모두 프로젝트 안에 manage.py와 모든 앱이 모여있는 곳을 뜻합니다.
+또한 "**프로젝트 설정 폴더**"는 프로젝트 루트 폴더 안쪽에 있는, 프로젝트와 같은 이름을 하고 있는 폴더를 뜻합니다.
+
+우선, Post 앱을 먼저 만들어 보겠습니다.  
+Django에서 앱을 참조할 때는 항상 import를 통해서 참조하기 때문에, 대소문자에 영향을 받습니다.  
+따라서 앱을 만들고 프로그램 코드에 추가할 때는 항상 대소문자에 유의해야 합니다. 
+먼저 Django 프로젝트의 루트 디렉토리에서 다음과 같이 입력합시다.  
+
+```
+~/blog $ python manage.py startapp post
+```
+
+명령어의 실행이 끝나면, 루트 디렉토리에는 **post** 디렉토리가 새로 생길 것입니다.  
+들어가서 **models.py**를 수정하도록 하겠습니다.  
+**models.py** 파일은 이 앱(post)에서 쓰일 모든 모델이 모이는 곳입니다.  
+물론 다른 앱에서 import를 통해 이 앱의 모델을 참조하는 것도 가능합니다.
+
+우선, Post 데이터베이스 모델을 먼저 만들어 보겠습니다.  
+기존 코드는 모두 놔두고, 아래에 다음과 같이 입력합니다.  
+
+```py
+class Post(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    title = models.CharField(max_length=50)
+    created_at = models.DateField(auto_now_add=True, editable=False)
+    edited_at = models.DateField(auto_now=True, editable=False)
+    editor = models.TextField()
+    content = models.TextField(editable=False)
+    
+    def save(self, *args, **kwargs):
+        # editor(markdown) to content(html)
+        super(Post, self).save(*args, **kwargs)
+```
+
+우선, Post 모델은 위와 같습니다.  
+데이터베이스 모델은 항상 클래스로 이루어지며, models.Model 클래스를 상속받아야 합니다.  
+
+필드를 하나씩 정리해드리자면,
++ `id` : BigAutoField 입니다. AutoField는 IntegerField와 같은 속성이지만, Auto increment 기능이 붙어 있습니다. primary_key 파라미터가 붙어 있는데, primary_key는 조금 뒤에 설명해 드리겠습니다.
++ `title` : CharField 입니다. max_length 파라미터를 통해 길이를 제한하는 것이 데이터베이스 레벨과 Django 레벨에서 강제되어 있습니다.
++ `created_at` : DateField 입니다. 비슷한 필드로는 DateTimeField 가 있는데, 다른 점이라면 DateTimeField는 현재 시간/분/초까지 저장하지만 DateField는 오직 날짜만을 저장한다는 점입니다. auto_now_add 파라미터는 본 객체가 처음으로 저장된 날짜, 즉 데이터베이스에 처음으로 새롭게 기록된 날짜만을 저장합니다. editable=False 파라미터가 붙어있는데, 이것은 필드가 Django Admin 페이지에서 보이지 않도록 하는 파라미터입니다. 어차피 created_at과 edited_at 필드는 자동으로 값이 저장될 것이기 때문에, 수정하는것이 의미가 없어 editable을 주었습니다.
++ `edited_at` : 마찬가지로 DateField이지만, auto_now 파라미터가 붙어 있습니다. 이것은 본 객체가 저장된 날짜, 즉 처음으로 저장된 날짜를 포함한 **가장 최근에 객체가 저장된 시각**을 나타냅니다. 따라서 auto_now_add의 경우 생성된 시각을 표시하기에 알맞고, auto_now의 경우 수정된 시각을 나타내기에 알맞은 파라미터입니다.
++ `editor, content` : TextField입니다. CharField와는 다르게 글자 제한이 없어 대용량의 문자열을 저장하기에 알맞습니다. 이 예제에서는 블로그의 글을 구현하기 위해 Markdown 형식을 사용할 것이므로, 수정하기 편하게 하기 위해 Markdown 형식을 그대로 담을 editor와, Markdown으로 쓰여진 글을 HTML으로 변환해 담을 content 필드가 있습니다. 다만, Markdown을 HTML로 변환하는 것은 객체를 저장하는 과정에서 자동으로 진행될 것이므로, 굳이 admin 페이지에서 표시할 필요가 없어 editable을 False로 주었습니다.
+
+primary_key 파라미터의 경우 각 데이터베이스 모델에 반드시 있는 필드입니다.  
+primary_key=True로 어떤 필드던 primary_key 속성을 부여할 수 있고, 만약 부여하지 않을 경우 설정 안에  명시된 DEFAULT_AUTO_FIELD 값이나 각 앱 안의 apps.py의 AppConfig 클래스 속성중 하나인 default_auto_field 설정에 따라 자동으로 추가됩니다.  
+또한 primary_key를 추가할 경우 자동으로 null=False 속성과 unique=True 속성이 강제됩니다.  
+한 모델에는 하나의 primary_key만 추가할 수 있습니다.  
+primary_key 필드는 read-only 속성을 가지고 있습니다. 만약 수정하려고 할 경우 기존 레코드와는 별개로 수정된 primary_key 값을 가진 새로운 레코드가 추가됩니다.  
+
+더 많은 필드 설명은 https://docs.djangoproject.com/en/4.1/ref/models/fields 링크에서 확인하실 수 있습니다.
+
+이제 필드 설명을 마쳤으니, save 메서드를 설명하겠습니다.  
+사실 models.Model 부모 클래스 안에 이미 save 메서드가 존재하기 때문에, 일반적인 모델의 경우 굳이 save 메서드를 추가할 필요가 없습니다.  
+그럼에도 추가한 이유는, post 객체를 저장하기 전 content에 editor 필드의 값을 HTML로 변환한 값이 자동으로 추가되어야 하기 때문입니다.  
+따라서, 부모 클래스가 이미 가지고 있던 save 메서드를 실행하기 전에 markdown 변환 코드를 실행하기 위해, 객체의 save 메서드가 불렸을 경우 부모의 save 메서드를 바로 실행하는 대신 markdown 변환을 실행한 뒤 부모의 save 메서드로 넘어갈 수 있도록 할 것입니다.  
+위의 save 메서드는 markdown 변환 코드가 추가되지 않았습니다.  
+주석 처리된 부분에는 어떤 커스텀 코드도 들어갈 수 있으며, 객체를 데이터베이스에 저장하기 전 마지막 후처리를 객체 안에서 진행하는 단계라고 볼 수 있습니다.  
+
+파이썬에는 markdown 관련 라이브러리가 2개 있습니다.  
+markdown과 markdown2가 바로 그것인데, 이번 강좌에서는 markdown2를 사용하도록 할 것입니다.  
+markdown2 라이브러리는 기본적으로 markdown 라이브리보다 빠르고, 더 완전합니다. 또한 extras를 사용하여 확장이 쉽게 가능하도록 되어 있기 때문에, 사용하기 알맞습니다.  
+
+markdown2 깃허브 링크입니다. https://github.com/trentm/python-markdown2
+
+이제 markdown2를 설치합시다.
+```
+~/blog $ pip install markdown2
+~/blog $ pip install markdown2[all]
+```
+두가지의 설치 방법이 있는데, 후자의 경우 extras를 사용하기 위해 필요한 라이브러리까지 모두 설치하는 것이라고 볼 수 있습니다.  
+extras를 쓰지 않을 경우, 전자의 설치 방법을 선택해도 문제 없이 쓸 수 있습니다.  
+우선, 이 강좌에서는 extras를 쓰지 않고 기본으로 설치하도록 하겠습니다.  
+
+설치가 끝났으면, models.py 위쪽에 markdown2를 import로 불러와 줍니다.
+```py
+import markdown2
+```
+
+이제 save 메서드를 다음과 같이 업데이트 해줍시다.
+```py
+def save(self, *args, **kwargs):
+	self.content = markdown2.markdown(str(self.editor))
+	super(Post, self).save(*args, **kwargs)
+```
+
+이제 Post 객체를 저장할 때마다 save 메서드에서 자동으로 포스트의 내용을 HTML로 변환해줄 것입니다.  
+
+이제, 이 객체가 Django Admin 페이지에 보이도록 하기 위해, post 앱 안의 admin.py 파일에 다음과 같이 내용을 추가해줍시다.
+```py
+from .models import Post
+
+admin.site.register(Post)
+```
+
+현재 앱 디렉토리 안의 models.py 파일에서 Post 모델을 불러온 후 admin.site.register 함수를 통해 Django Admin 페이지에 모델을 등록하고 있습니다.
+
+이제 구현이 완료된 post 앱을, 우리가 manage.py를 사용해 서버를 시작하거나 어떠한 작업을 할 때 인식할 수 있도록 하기 위해 `settings/base.py` 쪽의 설정에 앱을 추가로 명시해 주어야 합니다.
+
+만들어진 앱을 설정에서 추가하는 것은 이미 강좌 3에서 다루었으므로 다 완료했을 것이라 생각하고 넘어가도록 하겠습니다.
+
+이제 데이터베이스를 최신화시키기 위해 마이그레이션 과정을 거쳐주어야 합니다.
+
+Django의 마이그레이션 과정은 makemigrations -> migrate, 이렇게 두 가지 단계로 나뉩니다.  
+먼저 마이그레이션 파일을 만들어주기 위해 프로젝트의 루트 디렉토리에서 다음과 같이 입력하겠습니다.
+
+```
+~/blog $ python manage.py makemigrations
+```
+
+여기서 `No changes detected` 가 나온다면 앱이 제대로 추가되지 않았거나, models.py가 제대로 저장되지 않았거나, 또 다른 에러가 있는 것일 수 있습니다.  
+makemigrations이 제대로 이루어졌다면, 이제 post 앱의 migrations 폴더를 들여다보도록 합시다.  
+마이그레이션 파일을 만드는 작업이 제대로 이루어졌다면, migrations 폴더 안에는 `__init__.py`와 함께 `0001_initial.py` 파일이 있을 것입니다.  
+`__init__.py`는 참조를 위한 파일이므로 아무런 상관이 없는 파일이고, `0001_initial.py` 파일을 들여다보면 데이터베이스의 변경점이 정리되어 있는 것을 볼 수 있습니다.  
+Django는 이 마이그레이션 데이터 파일을 가지고 데이터베이스의 구조를 수정해 나갑니다.  
+이제 이 마이그레이션 파일을 실제 데이터베이스에 적용시키기 위해서는 프로젝트의 루트 디렉토리에서 다음과 같이 입력해주면 됩니다.
+```
+~/blog $ python manage.py migrate
+```
+
+이제 SQLite3를 사용할 경우 manage.py 옆에 db.sqlite3가 만들어진 것을 볼 수 있을 것입니다.  
+
+데이터베이스가 마이그레이션 되었다면, 이제는 만들어진 포스트를 볼 수 있는 View를 만들도록 하겠습니다. 
+ Django가 MTV 구조라는 것은 기억하시겠죠. Model-Template-View 구조 답게, Model을 만들었고, 이제 View를 만들기 전에 이 View에서 제공할 Template을 만들어 줘야 합니다.  
+Template는 post 앱 안에 templates 폴더를 만들어서, 그 안에 html 파일을 추가하는 것으로 만들 수 있습니다.  
+이제 templates 폴더 안에 post 폴더를 만들고, 그 안에 view.html을 만들도록 하겠습니다.  
+파일 구조는 다음과 같이 구성됩니다.
+```
+- blog
+  ㄴ blog
+    ㄴ ...
+  ㄴ post
+    ㄴ models.py
+    ㄴ views.py
+    ...
+    ㄴ templates
+      ㄴ post
+        ㄴ view.html
+```
+
+강좌 4에서 설명했듯이, 이 과정은 앱끼리 template과 static 파일이 충돌하지 않도록 하기 위해 각 앱의 폴더 안에 본 앱과 똑같은 이름의 폴더를 하나 더 만들어주는 것입니다.  
+
+이제 post 앱 안의 views.py에 View를 추가하겠습니다.
+
+```py
+from django.shortcuts impot get_object_or_404
+from .models import Post
+
+def post_view(request, post_id):
+	post_obj = get_object_or_404(Post, pk=post_id)
+	# try:
+	#     post_obj = Post.objects.get(id=post_id)
+	# except Post.DoesNotExist:
+	#     raise Http404
+	return render(request, 'post/view.html', {"post": post_obj})
+```
+
+설명하겠습니다.  
+우선 post_obj를 가져오기 위해, django.shortcuts에서 get_object_or_404를 불러옵니다.  
+이는 object를 불러오거나, 불러오지 못할 경우 404를 내뱉기 때문에, 포스트가 존재하지 않으면 404를 뱉어야 하는 이 함수에서는 매우 유용합니다.  
+get_object_or_404의 경우 django shortcut으로, 바로 아래 있는 주석 처리된 코드와 같은 코드라고 보시면 됩니다.  
+아래 코드는 `Post.objects.get(id=post_id)` 코드로 포스트 객체를 가져오고 있습니다.  
+Post 모델의 object 속성은 Post의 부모 클래스, 즉 models.Model에 있는 기본적인 객체로, 모델의 매니저라고도 불립니다.  
+기본적으로는 모델을 가져올때 가장 많이 쓰이는 편이며, 당연하게도 확장해 새로운 기능을 추가할 수 있습니다.  
+get 이외에도 다양한 방식으로 queryset을 만들고 데이터베이스에 쿼리를 날릴 수 있는데, 이는 구글링하면 쉽게 찾아볼 수 있습니다.
+
+Django는 Django만의 Http 예외(에러)들을 가지고 있습니다.  
+만약 Http404 등과 같이 Django에서 만들어진 HTTP 에러들은 raise될 경우 Django에서 Client 쪽으로 에러가 전송되지만, HTTP 에러가 아닐 경우 Internal Server Error, 즉 예외 처리되지 않은 서버 내부의 에로 생각되어 클라이언트에게는 500이 전달되고, 서버에는 에러 Traceback이 로그됩니다.  
+그런데 모델 매니저인 objects.get 함수의 경우 레코드를 찾을 수 없을 때 models.Model 내부의 에러인 DoesNotExists 에러가 발생되어 Internal Server Error로 간주됩니다.  
+따라서 이것을 404로 바꿔주기 위해 try except문, 즉 예외 처리가 사용되는데, 이것을 줄여 get_object_or_404 함수로 바꿔 쓸 수 있습니다.
+
+Post 객체를 가져왔다면 이제 Post를 렌더링 할 차례입니다.  
+렌더링은 HTML 템플릿에 컨텍스트로 데이터를 주는 것으로 진행할 수 있습니다.  
+앱을 처음 만들고 주어지는 views.py 내부를 보면 render 함수가 이미 참조되어 있는 것을 볼 수 있습니다.  
+따라서 추가적인 참조없이 render 함수를 쓰는 것으로 렌더링 할 수 있습니다.
+
+render 함수는 기본적으로는 request, template location, context를 받습니다.  
+함수가 view로 쓰이게 되면 반드시 첫 파라미터에는 request가 오므로, 주의해서 파라미터를 추가할 수 있도록 해야 합니다.  
+request에는 Post의 Body 데이터나 Header 등 요청의 데이터가 오고, 나머지 파라미터는 URL에 포함되는 Path 파라미터입니다.  
+Path 파라미터는 조금 뒤, url 설정에서 view 함수를 추가할 때 설명하겠습니다.  
+post_view 함수에서는 post_id를 Path 파라미터로 받고, 그 post_id를 이용해 포스트 데이터를 가져옵니다.  
+다시 render 함수의 파라미터 설명으로 돌아와서, template location 파라미터는 templates 폴더를 기본으로 보므로 상대 경로를 사용해 `templates/post/view.html` 파일을 가져오기 위해 `post/view.html` 을 파라미터로 넘겨주었습니다.  
+가져온 post 객체를 컨텍스트로 템플릿에 넘겨주어야 하는데, 컨텍스트는 Dict 타입으로만 받기 때문에 반드시 Dict로 래핑해서 넘겨주어야 합니다.
+
+이제 템플릿을 잠시 수정하겠습니다.
+
+```html
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>{{ post.title }}</title>
+	</head>
+	<body>
+		<header>
+			<h1>{{ post.title }}</h1>
+			<p>Created at: {{ post.created_at|date:"Y-m-d" }}<br>
+			Edited at: {{ post.edited_at|date:"Y-m-d" }}</p>
+		</header>
+		<main>
+			{% autoescape off %}
+			{{ post.content }}
+			{% endautoescape %}
+		</main>
+	</body>
+</html>
+```
+
+css따윈 신경쓰지 않고 간단한 템플릿을 만들어 보았습니다. (css와 기타 정적 파일은 다음 강좌에서 추가하겠습니다.)
+
+Django Template 내부에 컨텍스트를 줄 때 post 객체의 키 값을 'post'로 주었기 때문에, 객체를 사용 할 때도 함수 내부의 변수명인 post_obj가 아니라 컨텍스트로 받은 post를 사용해야 합니다.  
+
+변수값을 가져올 때는 항상 `{{ 변수명 }}`으로 불러올 수 있습니다.  
+변수에 수정을 가하고 싶을 때는 필터를 사용할 수 있는데, 필터는 파이프 문자로 추가할 수 있습니다.
+
+DateTimeField나 DateField와 같이 날짜 변수들은 원하는 형태로 포맷해서 사용할 수 있는데, 파이프 문자로 date 필터를 사용하여 포맷 문자열을 넘길 수 있습니다. "Y-m-d" 포맷의 경우 "년-월-일" 포맷과 같습니다.  
+
+태그를 사용할 때는 `{% 태그 %}`와 같이 사용할 수 있습니다. 또한 사용한 뒤에는 `{% end태그 %}`와 같이 닫아줘야 합니다.
+태그는 변수보다 복잡한데, for문이나 if문과 같이 조건문을 사용하거나, 함수와 같이 사용할 수도 있습니다.
+템플릿을 확장하는 것도 가능한데, 더 자세한 template 문법은 이 링크에서 확인할 수 있습니다.  
+https://docs.djangoproject.com/en/4.1/ref/templates/language
+
+content를 불러올 때 `{% autoescape off %}`를 사용한 이유는 content가 HTML로 되어 있기 때문입니다.  
+Django Template에서 변수를 불러올때는 항상 자동적으로 이스케이프가 켜져 있기 때문에, HTML 형식으로 된 변수를 추가할 때는 autoescape를 꺼줘야 HTML이 추가될 수 있습니다.
+
+
+이제 마지막으로, view를 url에 추가해줘야 합니다.  
+Django에서는 url을 효과적으로 관리할 수 있도록 따로 방법을 마련해두고 있습니다.  
+보통 Django에서 가장 흔한 url 관리 방법은 각 앱에 urls.py를 추가하고 include를 통해 루트 urls.py에서 앱 urls.py를 참조하는 것입니다.  
+
+이제 보여드리겠습니다.  
+처음으로는 post 앱에 urls.py 파일을 추가합니다.  
+이후, urls.py를 다음과 같이 수정하도록 합니다.
+```py
+from . import views
+from django.urls import path
+
+app_name = "post"
+
+urlpatterns = [
+	path('<int:post_id>', views.post_view, name="post_view")
+]
+```
+
+app_name과 path의 파라미터중 하나인 name에 대해서는 지금 설명하기가 어려우므로 나중에 설명하도록 하고, 지금은 다른 것에 집중해 보도록 하겠습니다.
+
+프로젝트 설정 폴더에 들어가면 나오는 urls.py는 기본적으로 설정된 루트 urls 파일입니다.  
+따라서, 여기에 아까 적은 post 앱 안의 urls.py를 포함시켜주면 됩니다.  
+```py
+from django.urls import path, include
+
+urlpatterns = [
+	...  # 아마 기본적으로 Admin URL이 있을 것입니다.
+	path("post/", include("post.urls", namespace="post"))  # 이게 새로 추가할 url입니다.
+]
+```
+
+namespace 파라미터는 app_name, path의 name과 밀접한 관련이 있으므로 이 또한 미뤄두도록 하겠습니다.  
+우선, path를 "post/"로 하고 post.urls를 include하면, Django는 post.urls를 내부적으로 import해서 urlpatterns를 불러오고, include 함수와 같이 주어진 url에 가져온 urlpatterns를 붙여 새로운 urlpatterns를 만들어냅니다.  
+따라서, 불러온 url의 최종 버전은 다음과 같습니다.
+```
+post/<int:post_id>
+```
+
+만약 post 앱 안의 urls.py에 "view/" path가 하나 더 있었다면 최종 url 패턴은 다음과 같을 것입니다.
+```
+post/<int:post_id>
+post/view/
+```
+
+이제 어떻게 돌아가는지 이해가 가시나요?
+
+이번 강좌에서는 Post 데이터베이스 모델을 만들고 Admin 페이지에 등록시킨 후, 그에 맞는 View와 Template를 만들고 View를 URL과 연결시켜 보았습니다.
+
+이제 테스트를 해 보아야 하는데, 그 전에 먼저 Admin 페이지에 접속할 슈퍼 계정이 하나 필요합니다.  
+슈퍼 계정을 만들기 위해서는 루트 디렉토리에서 다음과 같이 입력하면 됩니다.
+```
+~/blog $ python manage.py createsuperuser
+```
+
+당연하게도, 이 User 또한 객체로 데이터베이스에 저장되어 있고, 또 그것을 상속받아 새로운 필드나 기능을 추가할 수도 있습니다.  
+
+이제 서버를 돌리기 위해서는 다음과 같이 입력하시면 됩니다.
+```
+~/blog $ python manage.py runserver
+```
+기본으로 바인딩 되는 주소는 127.0.0.1:8000입니다.
+
+이제 http://localhost:8000/admin 주소로 접속해 코드가 잘 작동하는지 테스트해보면 됩니다.
+
+이번 강좌는 여기에서 마칩니다.
